@@ -1,4 +1,16 @@
 const { MongoClient } = require('mongodb')
+const mongoose = require('mongoose')
+//mongodb://user_data_service_dev:VOwsBhCcMaidtMJJ@
+const MONGODB_URI = "mongodb://ln.ju3np.mongodb.net/user_info_service_db?authSource=admin";
+const MONGODB_USER = "user_data_service_dev";
+const MONGODB_PASS = "VOwsBhCcMaidtMJJ";
+
+const authData =  {
+    "user": MONGODB_USER,
+    "pass": MONGODB_PASS,
+    "useNewUrlParser": true,
+    "useCreateIndex": true
+}; 
 
 //mongo connection
 const url = process.env.MONGOURL
@@ -6,7 +18,7 @@ const client = new MongoClient(url)
 
 const dbName = process.env.USERDB
 
-const signup = (req, res) => {
+const signup = async (req, res) => {
     await client.connect()
     console.log("sucessful connection")
     const db = client.db(dbName)
@@ -36,4 +48,34 @@ const signup = (req, res) => {
 
 
 
-export { signup }
+const info = async (req, res) => {
+    // mongoose.connect(
+    //     MONGODB_URI, 
+    //     authData,
+    //     (err) => {
+    //         if (!err) { console.log('MongoDB connection succeeded.'); }
+    //         else { console.log('Error in MongoDB connection : ' + JSON.stringify(err, undefined, 2)); }
+    //     }
+    // );
+    // var db = mongoose.connection
+    // db.on('error', console.error.bind(console, 'connection error:'));
+    const uDat = {
+        email:req.user.email,
+        uid:req.user.uid
+    }
+    
+    MongoClient.connect("mongodb+srv://user_data_service_dev:VOwsBhCcMaidtMJJ@ln.ju3np.mongodb.net/test?authSource=admin", (err, db) => {
+        if (err) throw err;
+        var dbo = db.db("user_info_service_db")
+        dbo.collection("users").insertOne(uDat, (err, res)=> {
+            if (err) throw err;
+            db.close();
+        })
+    })
+    console.log(req.user)
+    res.json(req.user)
+}
+
+
+
+module.exports = { signup, info }

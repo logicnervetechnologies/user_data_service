@@ -1,3 +1,4 @@
+const setInfo = require("./setInfo.js")
 
 require('dotenv').config()
 console.log("form_server")
@@ -6,7 +7,6 @@ const app = express()
 const jwt = require('jsonwebtoken')
 const cors = require('cors')
 
-import { signup } from "./setInfo.js"
 
 
 
@@ -22,7 +22,8 @@ app.post('/posts', authenticateToken,(req, res) => {
     res.status(200)
     res.json(posts.filter(post => post.userid === req.user.uid))
 })
-.post('/signup', authenticateToken, signup)
+.post('/signup', authenticateToken, setInfo.signup)
+.post('/info', authenticateToken, setInfo.info)
 
 
 
