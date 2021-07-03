@@ -64,16 +64,29 @@ const info = async (req, res) => {
         uid:req.user.uid
     }
     
-    MongoClient.connect("mongodb+srv://user_data_service_dev:VOwsBhCcMaidtMJJ@ln.ju3np.mongodb.net/test?authSource=admin", (err, db) => {
+    MongoClient.connect("mongodb+srv://user_data_service_dev:VOwsBhCcMaidtMJJ@ln.ju3np.mongodb.net/test?authSource=admin", async (err, db) => {
         if (err) throw err;
         var dbo = db.db("user_info_service_db")
-        dbo.collection("users").insertOne(uDat, (err, res)=> {
-            if (err) throw err;
-            db.close();
+        const usersCol = dbo.collection("users")
+        const exists = usersCol.find({uid:uDat.uid})
+        const hasnext = await exists.hasNext().catch(err => {
+            console.log(err)
         })
+        if (hasnext) {
+            //user object already exists
+            
+            res.sendStatus(403)
+        }
+        else {
+            dbo.collection("users").insertOne(uDat, (err, res)=> {
+                if (err) throw err;
+                db.close();
+                
+            })
+        res.json(req.user)
+    }
     })
-    console.log(req.user)
-    res.json(req.user)
+    //console.log(req.user)
 }
 
 
