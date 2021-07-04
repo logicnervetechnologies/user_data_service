@@ -49,22 +49,12 @@ const signup = async (req, res) => {
 
 
 const info = async (req, res) => {
-    // mongoose.connect(
-    //     MONGODB_URI, 
-    //     authData,
-    //     (err) => {
-    //         if (!err) { console.log('MongoDB connection succeeded.'); }
-    //         else { console.log('Error in MongoDB connection : ' + JSON.stringify(err, undefined, 2)); }
-    //     }
-    // );
-    // var db = mongoose.connection
-    // db.on('error', console.error.bind(console, 'connection error:'));
     const uDat = {
         email:req.user.email,
         uid:req.user.uid
     }
     
-    MongoClient.connect("mongodb+srv://user_data_service_dev:VOwsBhCcMaidtMJJ@ln.ju3np.mongodb.net/test?authSource=admin", async (err, db) => {
+    MongoClient.connect(process.env.MONGOURI, async (err, db) => {
         if (err) throw err;
         var dbo = db.db("user_info_service_db")
         const usersCol = dbo.collection("users")
@@ -89,6 +79,17 @@ const info = async (req, res) => {
     //console.log(req.user)
 }
 
+const createUser = async (req, res) => {
+    //TODO: Implement creation of user into MongoDB 'users' collection in database: 'user_info_service_db'
+
+}
 
 
-module.exports = { signup, info }
+const editUser = async (req, res) => {
+    //TODO: Implement edit of user fields that are not arrays or UID or Email for user in MongoDB 'users' collection in database: 'user_info_service_db'
+
+}
+
+
+
+module.exports = { signup, info, createUser, editUser }

@@ -24,6 +24,8 @@ app.post('/posts', authenticateToken,(req, res) => {
 })
 .post('/signup', authenticateToken, setInfo.signup)
 .post('/info', authenticateToken, setInfo.info)
+.post('/createUser', authenticateToken, setInfo.createUser)
+.post('/editUser', authenticateToken, setInfo.editUser)
 
 
 
