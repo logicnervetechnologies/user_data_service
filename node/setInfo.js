@@ -5,12 +5,12 @@ const MONGODB_URI = "mongodb://ln.ju3np.mongodb.net/user_info_service_db?authSou
 const MONGODB_USER = "user_data_service_dev";
 const MONGODB_PASS = "VOwsBhCcMaidtMJJ";
 
-const authData =  {
+const authData = {
     "user": MONGODB_USER,
     "pass": MONGODB_PASS,
     "useNewUrlParser": true,
     "useCreateIndex": true
-}; 
+};
 
 //mongo connection
 const url = process.env.MONGOURL
@@ -37,9 +37,9 @@ const signup = async (req, res) => {
         user['primary'] = req.user.primary
         if (req.user.primary === false) {
             user['superior'] = ""
-        } 
+        }
     }
-    
+
     const insertResult = await users_collection.insertOne(user)
     console.log('Inserted documents =>', insertResult)
     res.body("signup_success")
@@ -50,44 +50,112 @@ const signup = async (req, res) => {
 
 const info = async (req, res) => {
     const uDat = {
-        email:req.user.email,
-        uid:req.user.uid
+        email: req.user.email,
+        uid: req.user.uid
     }
-    
+
     MongoClient.connect(process.env.MONGOURI, async (err, db) => {
         if (err) throw err;
         var dbo = db.db("user_info_service_db")
         const usersCol = dbo.collection("users")
-        const exists = usersCol.find({uid:uDat.uid})
+        const exists = usersCol.find({ uid: uDat.uid })
         const hasnext = await exists.hasNext().catch(err => {
             console.log(err)
         })
         if (hasnext) {
             //user object already exists
-            
+
             res.sendStatus(403)
         }
         else {
-            dbo.collection("users").insertOne(uDat, (err, res)=> {
+            dbo.collection("users").insertOne(uDat, (err, res) => {
                 if (err) throw err;
                 db.close();
-                
+
             })
-        res.json(req.user)
-    }
+            res.json(req.user)
+        }
     })
     //console.log(req.user)
 }
 
 const createUser = async (req, res) => {
-    //TODO: Implement creation of user into MongoDB 'users' collection in database: 'user_info_service_db'
+    // title is optional
+    if (!req.hasOwnProperty("title")) {
+        req.title = ""
+    }
+    const uDat = {
+        role: req.body.role,//(Patient or Medical Provider)
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        middleInitial: req.body.middleInitial,
+        email: req.user.email,
+        uid: req.user.uid, //(assigned from google auth)
+        modules: [],
+        teams: []
+    }
+    // organization iff medical provider
+    if (req.role = "Medical Provider") {
+        uDat["organization"] = req.organization
+    }
 
+    MongoClient.connect(process.env.MONGOURI, async (err, db) => {
+        if (err) throw err;
+        var dbo = db.db("user_info_service_db")
+        const usersCol = dbo.collection("users")
+        const exists = usersCol.find({ uid: uDat.uid })
+        const hasnext = await exists.hasNext().catch(err => {
+            console.log(err)
+        })
+        if (hasnext) {
+            //user object already exists
+
+            res.sendStatus(403)
+        }
+        else {
+            const insertResult = dbo.collection("users").insertOne(uDat, (err, res) => {
+                if (err) throw err;
+                db.close();
+            })
+            res.json(req.user)
+            console.log('Inserted documents =>', insertResult)
+            res.body("signup_success")
+            res.sendStatus(201)
+        }
+    })
 }
 
 
 const editUser = async (req, res) => {
-    //TODO: Implement edit of user fields that are not arrays or UID or Email for user in MongoDB 'users' collection in database: 'user_info_service_db'
 
+    valid = ["role", "firstName", "lastName", "middleInitial", "title", "organization"]
+    for (prop in req.body) {
+        if (!(prop in valid)) {
+            console.log("invalid attribute")
+            res.sendStatus(403);
+            return
+        }
+    }
+
+    MongoClient.connect(process.env.MONGOURI, async (err, db) => {
+        if (err) throw err;
+        var dbo = db.db("user_info_service_db")
+        const usersCol = dbo.collection("users")
+        const exists = usersCol.find({ uid: req.user.uid })
+        const hasnext = await exists.hasNext().catch(err => {
+            console.log(err)
+        })
+        if (!hasnext) {
+            // no match
+            res.sendStatus(403);
+        } else {
+            await usersCol.updateOne(
+                {uid: req.user.uid},
+                {$set: req.body}
+            ).catch(err => {console.log(err)})
+            // nothing to edit
+        }
+    })
 }
 
 
