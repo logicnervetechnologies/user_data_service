@@ -1,4 +1,5 @@
 const setInfo = require("./setInfo.js")
+const organization = require("./organization.js")
 
 require('dotenv').config()
 console.log("form_server")
@@ -18,15 +19,20 @@ app.use(cors({
 }))
 app.use(express.json())
 
+// user info routes
 app.post('/posts', authenticateToken,(req, res) => {
     res.status(200)
     res.json(posts.filter(post => post.userid === req.user.uid))
 })
 .post('/signup', authenticateToken, setInfo.signup)
-.post('/info', authenticateToken, setInfo.info)
 .post('/createUser', authenticateToken, setInfo.createUser)
 .post('/editUser', authenticateToken, setInfo.editUser)
+.post('/createUserTmp', authenticateToken, setInfo.createUserTmp)
+.post('/getMyUserData', authenticateToken, setInfo.getMyUserData)
 
+//org info routes
+app.post('/getOrganization', organization.getOrganizationInformation)
+.post('/createOrganization', organization.createOrganization)
 
 
 
@@ -54,7 +60,6 @@ function convertCookieString(cookieStr) {
  //   console.log(cookies)
     return cookies
 }
-
 // start server
 const PORT = process.env.HTTPPORT 
 app.listen(PORT)
