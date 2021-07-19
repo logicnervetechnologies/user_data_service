@@ -1,22 +1,8 @@
 const { MongoClient } = require('mongodb')
-const mongoose = require('mongoose')
-//mongodb://user_data_service_dev:VOwsBhCcMaidtMJJ@
-const MONGODB_URI = "mongodb://ln.ju3np.mongodb.net/user_info_service_db?authSource=admin";
-const MONGODB_USER = "user_data_service_dev";
-const MONGODB_PASS = "VOwsBhCcMaidtMJJ";
+require("dotenv").config()
 
-const authData = {
-    "user": MONGODB_USER,
-    "pass": MONGODB_PASS,
-    "useNewUrlParser": true,
-    "useCreateIndex": true
-};
-
-//mongo connection
-const url = process.env.MONGOURL
-const client = new MongoClient(url)
-
-const dbName = process.env.USERDB
+const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true, useUnifiedTopology: true })
+//const dbName = process.env.USERDB
 
 const signup = async (req, res) => {
     await client.connect()
@@ -46,37 +32,40 @@ const signup = async (req, res) => {
     res.sendStatus(201)
 }
 
-
-
-const info = async (req, res) => {
-    const uDat = {
-        email: req.user.email,
-        uid: req.user.uid
+const createUserTmp = async (req, res) => {
+    console.log("Entered TMP CREATE USER, this will be deprecated in next version")
+    // title is optional
+    if (!req.hasOwnProperty("title")) {
+        req.title = ""
     }
-
-    MongoClient.connect(process.env.MONGOURI, async (err, db) => {
-        if (err) throw err;
-        var dbo = db.db("user_info_service_db")
-        const usersCol = dbo.collection("users")
-        const exists = usersCol.find({ uid: uDat.uid })
-        const hasnext = await exists.hasNext().catch(err => {
-            console.log(err)
-        })
-        if (hasnext) {
-            //user object already exists
-
-            res.sendStatus(403)
+    const uDat = {
+        uid: req.user.uid, //(assigned from google auth)
+        fName: req.body.fName,
+        lName: req.body.lName
+    }
+    console.log(uDat)
+    var created = null;
+    try {
+        await client.connect()
+        const users = client.db(process.env.USERDB).collection(process.env.USERCOLLECTION)
+        const exists = await users.findOne({uid:uDat.uid}).catch(err => console.log(err))
+        if (!exists) {
+            const result = await users.insertOne(uDat).catch(err => console.log(err))
+            console.log(result)
+            created = uDat.uid;
         }
-        else {
-            dbo.collection("users").insertOne(uDat, (err, res) => {
-                if (err) throw err;
-                db.close();
-
-            })
-            res.json(req.user)
-        }
-    })
-    //console.log(req.user)
+    } catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    } finally {
+        await client.close()
+    }
+    if (created) {
+        res.body = "signup_success"
+        res.sendStatus(201)
+    } else {
+        res.sendStatus(400)
+    }
 }
 
 const createUser = async (req, res) => {
@@ -90,39 +79,58 @@ const createUser = async (req, res) => {
         lastName: req.body.lastName,
         middleInitial: req.body.middleInitial,
         email: req.user.email,
+        organizations: [],
         uid: req.user.uid, //(assigned from google auth)
         modules: [],
         teams: []
     }
-    // organization iff medical provider
-    if (req.role = "Medical Provider") {
-        uDat["organization"] = req.organization
+    var created = null;
+    try {
+        await client.connect()
+        const users = client.db(process.env.USERDB).collection(process.env.USERCOLLECTION)
+        const exists = await users.findOne({uid:uDat.uid})
+        if (!exists) {
+            const result = await users.insertOne(uDat)
+            console.log(result)
+            created = uDat.uid;
+        }
+    } catch (err) {
+        console.log(err)
+        res.sendStatus(500)
+    } finally {
+        await client.close()
+    }
+    if (created) {
+        res.body = "signup_success"
+        res.sendStatus(201)
+    } else {
+        res.sendStatus(500)
     }
 
-    MongoClient.connect(process.env.MONGOURI, async (err, db) => {
-        if (err) throw err;
-        var dbo = db.db("user_info_service_db")
-        const usersCol = dbo.collection("users")
-        const exists = usersCol.find({ uid: uDat.uid })
-        const hasnext = await exists.hasNext().catch(err => {
-            console.log(err)
-        })
-        if (hasnext) {
-            //user object already exists
+    // MongoClient.connect(process.env.MONGOURI, async (err, db) => {
+    //     if (err) throw err;
+    //     var dbo = db.db("user_info_service_db")
+    //     const usersCol = dbo.collection("users")
+    //     const exists = usersCol.find({ uid: uDat.uid })
+    //     const hasnext = await exists.hasNext().catch(err => {
+    //         console.log(err)
+    //     })
+    //     if (hasnext) {
+    //         //user object already exists
 
-            res.sendStatus(403)
-        }
-        else {
-            const insertResult = dbo.collection("users").insertOne(uDat, (err, res) => {
-                if (err) throw err;
-                db.close();
-            })
-            res.json(req.user)
-            console.log('Inserted documents =>', insertResult)
-            res.body("signup_success")
-            res.sendStatus(201)
-        }
-    })
+    //         res.sendStatus(403)
+    //     }
+    //     else {
+    //         const insertResult = dbo.collection("users").insertOne(uDat, (err, res) => {
+    //             if (err) throw err;
+    //             db.close();
+    //         })
+    //         res.json(req.user)
+    //         console.log('Inserted documents =>', insertResult)
+    //         res.body("signup_success")
+    //         res.sendStatus(201)
+    //     }
+    // })
 }
 
 
@@ -158,6 +166,37 @@ const editUser = async (req, res) => {
     })
 }
 
+const getUserData = async (uid) => {
+    var user = null;
+    try {
+        await client.connect()
+        const users = client.db(process.env.USERDB).collection(process.env.USERCOLLECTION)
+        const exists = await users.findOne({uid:uid})
+        if (!exists) {
+            console.log("User does not exist")
+        } else {
+            user = exists
+        }
+    } catch (err) {
+        console.log(err)
+    } finally {
+        await client.close()
+    }
+    return user;
+}
+
+const getMyUserData = async (req, res) => {
+    const uid = req.user.uid;
+    const myUserData = await getUserData(uid);
+    if (myUserData === null) {
+        res.status(204)
+        res.json({ data: "USERDNE" })
+    } else {
+        res.json(myUserData)
+    }
+}
 
 
-module.exports = { signup, info, createUser, editUser }
+
+
+module.exports = { signup, createUser, editUser, getMyUserData, createUserTmp }
