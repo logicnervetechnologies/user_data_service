@@ -1,7 +1,8 @@
 const { MongoClient } = require('mongodb')
 require("dotenv").config()
 
-const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true, useUnifiedTopology: true })
+
+const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true })
 //const dbName = process.env.USERDB
 
 const signup = async (req, res) => {
@@ -35,6 +36,7 @@ const signup = async (req, res) => {
 const createUserTmp = async (req, res) => {
     console.log("Entered TMP CREATE USER, this will be deprecated in next version")
     // title is optional
+    console.log(req.body)
     if (!req.hasOwnProperty("title")) {
         req.title = ""
     }
@@ -59,17 +61,18 @@ const createUserTmp = async (req, res) => {
         res.sendStatus(500)
     } finally {
         await client.close()
+        
+        if (created) {
+            res.body = "signup_success"
+            res.sendStatus(201)
+        }
     }
-    if (created) {
-        res.body = "signup_success"
-        res.sendStatus(201)
-    } else {
-        res.sendStatus(400)
-    }
+    // res.sendStatus(201)
 }
 
 const createUser = async (req, res) => {
     // title is optional
+    console.log("Creating User")
     if (!req.hasOwnProperty("title")) {
         req.title = ""
     }
@@ -99,12 +102,12 @@ const createUser = async (req, res) => {
         res.sendStatus(500)
     } finally {
         await client.close()
-    }
-    if (created) {
-        res.body = "signup_success"
-        res.sendStatus(201)
-    } else {
-        res.sendStatus(500)
+        if (created) {
+            res.body = "signup_success"
+            res.sendStatus(201)
+        } else {
+            res.sendStatus(500)
+        }
     }
 
     // MongoClient.connect(process.env.MONGOURI, async (err, db) => {
@@ -181,13 +184,15 @@ const getUserData = async (uid) => {
         console.log(err)
     } finally {
         await client.close()
+        return user;
     }
-    return user;
 }
 
 const getMyUserData = async (req, res) => {
+    console.log("getting user data")
     const uid = req.user.uid;
     const myUserData = await getUserData(uid);
+    console.log(myUserData);
     if (myUserData === null) {
         res.status(204)
         res.json({ data: "USERDNE" })
