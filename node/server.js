@@ -1,5 +1,6 @@
 const setInfo = require("./setInfo.js")
 const organization = require("./organization.js")
+const user = require('./user.js')
 
 require('dotenv').config()
 console.log("form_server")
@@ -24,11 +25,8 @@ app.post('/posts', authenticateToken,(req, res) => {
     res.status(200)
     res.json(posts.filter(post => post.userid === req.user.uid))
 })
-.post('/signup', authenticateToken, setInfo.signup)
-.post('/createUser', authenticateToken, setInfo.createUser)
-.post('/editUser', authenticateToken, setInfo.editUser)
-.post('/createUserTmp', authenticateToken, setInfo.createUserTmp)
-.post('/getMyUserData', authenticateToken, setInfo.getMyUserData)
+.post('/createUserTmp', authenticateToken, user.createUserTmp)
+.post('/getMyUserData', authenticateToken, user.getMyUserData)
 
 //org info routes
 app.post('/getOrganization', organization.getOrganizationInformation)
@@ -40,7 +38,10 @@ app.post('/getOrganization', organization.getOrganizationInformation)
 function authenticateToken(req, res, next) {
     const authHeaderCookie = req.headers['cookie']
     const token = authHeaderCookie && convertCookieString(authHeaderCookie)['accessToken']  
-    if (token == null) return res.sendStatus(401) // check header
+    if (token == null) { 
+        console.log("No auth token")
+        return res.sendStatus(401) // check header
+    }
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err) {
             console.log(err)
