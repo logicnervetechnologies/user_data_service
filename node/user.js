@@ -32,7 +32,8 @@ const createUserTmp = async (req, res) => {
     const uDat = {
         uid: req.user.uid, //(assigned from google auth)
         fName: req.body.fName,
-        lName: req.body.lName
+        lName: req.body.lName,
+        organizations:[]
     }
     if (!exists(uDat.uid)) {
         console.log("unauthorized")
@@ -73,7 +74,22 @@ const getMyUserData = async (req, res) => {
     }
 }
 
+const addOrganizationToUser = async (uid, orgId) => {
+    console.log(uid)
+    var updated = null;
+    try {
+        var userDataOrgs = (await getUserData(uid)).organizations
+        userDataOrgs.push(orgId)
+        await userCol.updateOne({uid:uid}, {$set:{organizations: userDataOrgs}});
+    } catch (err) {
+        console.error(err)
+    } finally  {
+        if (updated) return true;
+        else return false;
+    }
+}
 
 
 
-module.exports = { getMyUserData, createUserTmp }
+
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser }

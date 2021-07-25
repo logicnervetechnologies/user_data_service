@@ -1,22 +1,21 @@
 const { MongoClient } = require('mongodb')
 const { v4 : uuidv4 } = require('uuid')
+const { addOrganizationToUser } = require('./user.js')
 require("dotenv").config()
 //mongodb://user_data_service_dev:VOwsBhCcMaidtMJJ@
 
 const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 const createOrganization = async (req, res) => {
-    // const creatorUser = req.user
-    const creatorUser = {
-        uid:"testuidsins"
-    }
+    const creatorUser = req.user
     const new_organization = {
         orgName: req.body.orgName,
         orgId: uuidv4(),
         address: req.body.orgAddress,
         alwaysAskAddingProvider: true,
         alwaysAskAddingPatient: true,
-        admins: [creatorUser],
+        admins: [creatorUser.uid],
+        owner: [creatorUser.uid],
         roles: [],
         noRole:[]
     }
@@ -27,6 +26,7 @@ const createOrganization = async (req, res) => {
         await orgs.insertOne(new_organization)
         // TODO add organization ID to user
         created = new_organization.orgId;
+        await addOrganizationToUser(creatorUser.uid, new_organization.orgId);
     } catch (err) {
         console.log(err)
         res.sendStatus(500)
@@ -38,9 +38,9 @@ const createOrganization = async (req, res) => {
     //console.log(req.user)
 }
 
-const editOrganizationInfo = (orgId, edit) => {
+// const editOrganizationInfo = (orgId, edit) => {
 
-}
+// }
 
 
 const getOrganizationData = async (orgId) => {
