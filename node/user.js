@@ -1,4 +1,3 @@
-const { MongoClient } = require('mongodb')
 const mongoose = require('mongoose')
 const struct = require("./structure.js");
 require("dotenv").config()
