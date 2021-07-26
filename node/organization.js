@@ -38,9 +38,52 @@ const createOrganization = async (req, res) => {
     //console.log(req.user)
 }
 
-// const editOrganizationInfo = (orgId, edit) => {
+getAdminsOfOrganization = async (orgId) => {
+    //TODO get admins of org
+}
 
-// }
+addAdminToOrganization = async (orgId, newAdminUid) => {
+    // TODO add new admin to organization with orgid
+}
+
+removeAdminFromOrganization = async (orgId, adminUid) => {
+    // TODO remove new admin to organization with orgid
+    // must make sure there is at least one admin within organization post-removal
+}
+
+addUserToOrganization = async (orgId, userUid) => {
+    // TODO add user to role within organization
+}
+
+shiftUserRoleInOrganization = async (orgId, userUid) => {
+    // TODO shift user to role within organization
+}
+
+removeUserFromOrganization = async (orgId, userUid) => {
+    // TODO remove user from organization
+    // check to ensure user is not admin or owner
+}
+
+changeOwnerOfOrganization = async (orgId, userUid) => {
+    // TODO change owner of organization
+    // Check to ensure uid of requester is owner
+    // TODO implement some form of verification via email or something to complete this action
+}
+
+const adminAction = async (req, res) => {
+    const requester = req.user.uid
+    const { action, orgId, newAdmin } = req.body
+    const orgAdmins = getAdminsOfOrganization(orgId)
+    if (!(requester in orgAdmins)) {
+        res.sendStatus(401);
+        return
+    }
+    if (action === 'addAdminToOrg') {
+        addAdminToOrganization(orgId, newAdmin)
+    }
+}
+
+
 
 
 const getOrganizationData = async (orgId) => {
@@ -67,4 +110,4 @@ const getOrganizationInformation = async (req, res) => {
     res.json(organization)
 }
 
-module.exports = { createOrganization, getOrganizationInformation }
+module.exports = { createOrganization, getOrganizationInformation, adminAction }

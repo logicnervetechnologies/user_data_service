@@ -31,6 +31,7 @@ app.post('/posts', authenticateToken,(req, res) => {
 //org info routes
 app.post('/getOrganization', organization.getOrganizationInformation)
 .post('/createOrganization', authenticateToken, organization.createOrganization)
+.post('/adminAction', authenticateToken, organization.adminAction)
 
 
 
