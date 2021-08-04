@@ -13,7 +13,7 @@ const connection = mongoose.connection;
 const userCol = connection.collection('users') 
 
 connection.once("open", function() {
-  console.log("MongoDB database connection established successfully");
+  console.log("MongoDB database connection established successfully - users");
 });
 
 const createUser = async ( newUser ) => {
