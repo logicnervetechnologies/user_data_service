@@ -10,7 +10,6 @@ mongoose.connect(process.env.MONGOUSERSURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
-
 const connection = mongoose.connection;
 const orgCol = connection.collection('organizations') 
 connection.once("open", function() {
@@ -129,13 +128,14 @@ logAction = (err, object) => {
 
 const adminAction = async (req, res) => {
     const requester = req.user.uid
-    const { action, orgId, newAdmin } = req.body
+    const { action, orgId } = req.body
     const orgAdmins = getAdminsOfOrganization(orgId)
     if (!(requester in orgAdmins)) {
         res.sendStatus(401);
         return
     }
     if (action === 'addAdminToOrg') {
+        const { newAdmin } = req.body
         addAdminToOrganization(orgId, newAdmin)
     }
 }
@@ -154,4 +154,4 @@ const getOrganizationInformation = async (req, res) => {
     res.json(organization)
 }
 
-module.exports = { createOrganization, getOrganizationInformation, adminAction }
+module.exports = { createOrganization, getOrganizationInformation, adminAction, getOrganizationData, orgCol }

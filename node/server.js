@@ -9,11 +9,6 @@ const app = express()
 const jwt = require('jsonwebtoken')
 const cors = require('cors')
 
-
-
-
-
-
 app.use(cors({
     origin:"http://localhost:3000",
     credentials:true
@@ -31,9 +26,19 @@ app.post('/posts', authenticateToken,(req, res) => {
 //org info routes
 app.post('/getOrganization', organization.getOrganizationInformation)
 .post('/createOrganization', authenticateToken, organization.createOrganization)
-.post('/adminAction', authenticateToken, organization.adminAction)
+.post('/adminAction', pretendToken, organization.adminAction)
 
 
+
+// pretendToken for testing
+function pretendToken(req, res, next) {
+    user = {
+        uid: req.body.fakeUID
+    }
+    req.user = user;
+    console.log(req.user)
+    next()
+}
 
 // authentication functions
 function authenticateToken(req, res, next) {
@@ -62,7 +67,10 @@ function convertCookieString(cookieStr) {
  //   console.log(cookies)
     return cookies
 }
+
 // start server
 const PORT = process.env.HTTPPORT 
-app.listen(PORT)
-console.log("listenting on port:" + PORT)
+app.listen(PORT, () => {
+    console.log("listenting on port:" + PORT)
+})
+// module.exports = { app }
