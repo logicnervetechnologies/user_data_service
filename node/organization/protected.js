@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb')
 const mongoose = require('mongoose')
 const { v4 : uuidv4 } = require('uuid')
-const { addOrganizationToUser } = require('./user.js')
+const { addOrganizationToUser } = require('../user.js')
 require("dotenv").config()
 
 const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true, useUnifiedTopology: true })

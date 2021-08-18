@@ -1,5 +1,5 @@
 const setInfo = require("./setInfo.js")
-const organization = require("./organization.js")
+const organization = require("./organization/protected.js")
 const user = require('./user.js')
 
 require('dotenv').config()
