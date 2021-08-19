@@ -74,7 +74,7 @@ removeAdminFromOrganization = async (orgId, adminUid) => {
 }
 
 getRolesInOrganization = async (orgId) => {
-    const org = getOrganizationData(orgId);
+    const org = await getOrganizationData(orgId);
     var roles = []
     org.roles.forEach(roleObj => {
         roles.push(roleObj.role)
@@ -135,17 +135,40 @@ userInOrg = async (org, userUid) => {
 addUserToOrganization = async (orgId, role, userUid) => {
     const org = await getOrganizationData(orgId)
     if (await userInOrg(org, userUid)) return false
-    // there are two considerations here:
     // 1. we don't validate roles using getRoles, since we have to perform the
     // iteration for insertion anyways.
-    // 2. we don't do addOrgToUser. Presently, this only works if said user has
-    // already been added to the user DB, which isn't knowable in the current
-    // scope.
+    // addOrgToUser has problems since we need to know if the user is in users
     return await addUserToRole(org, orgId, role, userUid)
 }
 
-shiftUserRoleInOrganization = async (orgId, userUid) => {
-    // TODO shift user to role within organization
+shiftUserRoleInOrganization = async (orgId, userUid, oldRole, newRole) => {
+    const org = await getOrganizationData(orgId)
+    // user not in org
+    if (!(await userInOrg(org, userUid))) return false
+    const roles = await getRolesInOrganization(orgId)
+    // if either role is an actual string and it doesnt exist
+    if ((oldRole && !roles.includes(oldRole)) || (newRole && !roles.includes(newRole))) return false
+    // invalid movement
+    if (oldRole == newRole) return false
+    // remove user from old role
+    if (!oldRole) {
+        orgCol.updateOne({ orgId }, { $pull: { noRole: userUid }}, logAction)
+    } else {
+        for (const [index, roleObj] of org.roles.entries()) {
+            if (roleObj.role == oldRole) {
+                orgCol.updateOne(
+                    { orgId },
+                    { $pull: {
+                        [`roles.${index}.users`]: userUid
+                    },
+                    logAction
+                })
+            }
+        }
+    }
+    // put user into new role
+    addUserToRole(org, orgId, newRole, userUid)
+    return true
 }
 
 removeUserFromOrganization = async (orgId, userUid) => {
@@ -186,8 +209,13 @@ const adminAction = async (req, res) => {
     } else if (action === 'addUserToOrganization') {
         const { newUser, role } = req.body
         if (newUser == null) res.sendStatus(400)
-        if (await addUserToOrganization(orgId, role, newUser)) res.sendStatus(200)
+        else if (await addUserToOrganization(orgId, role, newUser)) res.sendStatus(200)
         else res.sendStatus(403)
+    } else if (action === 'shiftUserRoleInOrganization') {
+        const { orgId, userId, oldRole, newRole } = req.body
+        if (await shiftUserRoleInOrganization(orgId, userId, oldRole, newRole)) {
+            res.sendStatus(200)
+        } else res.sendStatus(403)
     }
 
 }
