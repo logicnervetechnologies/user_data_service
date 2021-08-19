@@ -32,7 +32,7 @@ app.post('/getOrganization', organization.getOrganizationInformation)
 
 // pretendToken for testing
 function pretendToken(req, res, next) {
-    user = {
+    var user = {
         uid: req.body.fakeUID
     }
     req.user = user;
