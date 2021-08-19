@@ -102,35 +102,46 @@ deleteRoleFromOrganization = async (orgId, role) => {
     // TODO, remove role from org ONLY IF no user array in org is empty
 }
 
-addUserToOrganization = async (orgId, role, userUid) => {
-    const org = await getOrganizationData(orgId)
-    // role is empty or null -> no role
+addUserToRole = async (org, orgId, role, userUid) => {
+    // no role
     if (!role) {
-        // check duplicates
-        if (org.noRole.includes(userUid)) return false
         orgCol.updateOne({ orgId }, { $push: { noRole: userUid }}, logAction)
-        addOrganizationToUser(userUid, orgId)
         return true
     }
-    // check if the role exists in the roles array
+    // check if role is in roles array
     for (const [index, roleObj] of org.roles.entries()) {
         if (roleObj.role == role) {
-            // if user is already found, terminate
-            if (roleObj.users.includes(userUid)) return false
-            // this requires a precomputed key, since we need to specify the
-            // array, which we do by iterating over indices as well
             orgCol.updateOne(
                 { orgId },
                 { $push: {
                     [`roles.${index}.users`]: userUid
                 },
-                logAction}
-            )
-            addOrganizationToUser(userUid, orgId)
+                logAction
+            })
             return true
         }
     }
     return false
+}
+
+userInOrg = async (org, userUid) => {
+    if (org.noRole.includes(userUid)) return true
+    for (const roleObj of org.roles.entries()) {
+        if (roleObj[1].users.includes(userUid)) return true
+    }
+    return false
+}
+
+addUserToOrganization = async (orgId, role, userUid) => {
+    const org = await getOrganizationData(orgId)
+    if (await userInOrg(org, userUid)) return false
+    // there are two considerations here:
+    // 1. we don't validate roles using getRoles, since we have to perform the
+    // iteration for insertion anyways.
+    // 2. we don't do addOrgToUser. Presently, this only works if said user has
+    // already been added to the user DB, which isn't knowable in the current
+    // scope.
+    return await addUserToRole(org, orgId, role, userUid)
 }
 
 shiftUserRoleInOrganization = async (orgId, userUid) => {
