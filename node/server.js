@@ -30,7 +30,7 @@ app.post('/getOrganization', organization.getOrganizationInformation)
 .post('/adminAction', pretendToken, organization.adminAction);
 
 //general org info routes
-app.post('./getOrgsPublicInfo', orgGeneral.getGeneralInfoOrganization);
+app.post('/getBasicOrganization', orgGeneral.getGeneralInfoOrganization);
 
 
 // pretendToken for testing
