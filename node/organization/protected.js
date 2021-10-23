@@ -188,6 +188,7 @@ const getOrganizationData = async (orgId) => {
 
 const getOrganizationInformation = async (req, res) => {
     //Authentication check needs to be implmemented
+    //TODO: check if user is in org, give extended info, else basic info
     const orgId = req.body.orgId;
     console.log(`Requesting org: ${orgId}`)
     console.log(orgId)
@@ -195,4 +196,14 @@ const getOrganizationInformation = async (req, res) => {
     res.json(organization)
 }
 
-module.exports = { createOrganization, getOrganizationInformation, adminAction, getOrganizationData, orgCol }
+const getBasicOrganizationInfo = async (req, res) => {
+    const orgId = req.body.orgId
+    const organization = await getOrganizationData(orgId);
+    const basic = {
+        orgName: organization.orgName,
+        orgId: organization.orgId
+    }
+    res.json(basic)
+}
+
+module.exports = { createOrganization, getOrganizationInformation, getBasicOrganizationInfo, adminAction, getOrganizationData, orgCol }

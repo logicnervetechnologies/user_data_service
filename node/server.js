@@ -1,5 +1,6 @@
 const setInfo = require("./setInfo.js")
 const organization = require("./organization/protected.js")
+const orgGeneral = require("./organization/general.js")
 const user = require('./user.js')
 
 require('dotenv').config()
@@ -21,13 +22,15 @@ app.post('/posts', authenticateToken,(req, res) => {
     res.json(posts.filter(post => post.userid === req.user.uid))
 })
 .post('/createUserTmp', authenticateToken, user.createUserTmp)
-.post('/getMyUserData', authenticateToken, user.getMyUserData)
+.post('/getMyUserData', authenticateToken, user.getMyUserData);
 
-//org info routes
+//private org info routes
 app.post('/getOrganization', organization.getOrganizationInformation)
 .post('/createOrganization', authenticateToken, organization.createOrganization)
-.post('/adminAction', pretendToken, organization.adminAction)
+.post('/adminAction', pretendToken, organization.adminAction);
 
+//general org info routes
+app.post('/getBasicOrganization', orgGeneral.getGeneralInfoOrganization);
 
 
 // pretendToken for testing
