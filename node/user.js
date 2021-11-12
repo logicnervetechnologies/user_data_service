@@ -88,7 +88,24 @@ const addOrganizationToUser = async (uid, orgId) => {
     }
 }
 
+const notifyUser = async (uid, notifMessage, notifHyperlink = null) => {
+    console.log("notifying " + uid);
+    newNotif = {
+        notifMessage,
+        notifHyperlink,
+        date: Date()
+    };
+    try {
+        await userCol.updateOne({ uid }, { $push: { notifications: newNotif} });
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
+}
 
 
 
-module.exports = { getMyUserData, createUserTmp, addOrganizationToUser }
+
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, notifyUser }
