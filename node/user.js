@@ -88,13 +88,14 @@ const addOrganizationToUser = async (uid, orgId) => {
     }
 }
 
-const notifyUser = async (uid, notifMessage, notifHyperlink = null) => {
+const notifyUser = async (uid, notifMessage, notifData, notifHyperlink = null) => {
     console.log("notifying " + uid);
     newNotif = {
         notifMessage,
+        notifData,
         notifHyperlink,
         date: Date()
-    };
+    };f
     try {
         await userCol.updateOne({ uid }, { $push: { notifications: newNotif} });
     } catch (err) {
