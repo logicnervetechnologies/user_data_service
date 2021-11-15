@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const struct = require("./structure.js");
 require("dotenv").config()
+const { v4 : uuidv4 } = require('uuid')
 
 
 const userStruct = new mongoose.Schema(struct.userDef);
@@ -88,16 +89,17 @@ const addOrganizationToUser = async (uid, orgId) => {
     }
 }
 
-const notifyUser = async (uid, notifMessage, notifData, notifHyperlink = null) => {
+const notifyUser = async (uid, notifData, notifHyperlink = null) => {
+    // create notification object
     console.log("notifying " + uid);
     newNotif = {
-        notifMessage,
         notifData,
         notifHyperlink,
+        nid: uuidv4(),
         date: Date()
-    };f
+    };
     try {
-        await userCol.updateOne({ uid }, { $push: { notifications: newNotif} });
+        await userCol.updateOne({ uid }, { $push: { notifications: newNotif} }); //push to mongo user obj
     } catch (err) {
         console.error(err)
         return false;
@@ -105,6 +107,12 @@ const notifyUser = async (uid, notifMessage, notifData, notifHyperlink = null) =
         return true;
     }
 }
+
+const deleteNotification = async (uid, nid) => {
+    // delete notification `nid` from user `uid`
+}
+
+
 
 
 
