@@ -120,9 +120,21 @@ const deleteNotification = async (uid, nid) => {
     }
 }
 
+const testFunctions = async (req, res) => {
+    const uid = req.body.uid;
+    if (req.body.action === 'createNotif') {
+        const notifData = req.body.notifData;
+        const notified = await notifyUser(uid, notifData);
+        res.send({notified})
+    } else if (req.body.action === "removeNotif") {
+        const nid = req.body.nid;
+        const removed = await deleteNotification(uid, nid);
+        res.send(removed);
+    }
+}
 
 
 
 
 
-module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, notifyUser }
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, notifyUser, testFunctions}
