@@ -109,7 +109,15 @@ const notifyUser = async (uid, notifData, notifHyperlink = null) => {
 }
 
 const deleteNotification = async (uid, nid) => {
-    // delete notification `nid` from user `uid`
+    console.log("deleting notification " + nid + " from " + uid);
+    try {
+        await userCol.updateOne({ uid }, { $pull: { notifications: { nid: nid}} }); //pull from mongo user obj
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
 }
 
 
