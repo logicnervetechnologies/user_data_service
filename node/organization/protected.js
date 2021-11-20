@@ -69,6 +69,17 @@ addAdminToOrganization = async (orgId, newAdminUid) => {
 }
 
 removeAdminFromOrganization = async (orgId, adminUid) => {
+    const currentAdmins = await getAdminsOfOrganization(orgId);
+    // If there is only a single admin, removal is ill-defined.
+    if (currentAdmins.length == 1) {
+        return false;
+    } else if (currentAdmins.includes(adminUid)) { // if admin in list, remove
+        orgCol.updateOne({ orgId }, { $pull: { admins: adminUid } }, logAction);
+        return true;
+    } else { // missing!
+        return false;
+    }
+
     // TODO remove new admin to organization with orgid
     // must make sure there is at least one admin within organization post-removal
 }
@@ -177,6 +188,10 @@ const adminAction = async (req, res) => {
         if (newUser == null) res.sendStatus(400)
         if (await addUserToOrganization(orgId, role, newUser)) res.sendStatus(200)
         else res.sendStatus(403)
+    } else if (action === 'removeAdminFromOrganization') {
+        const { adminUid } = req.body;
+        if (await removeAdminFromOrganization(orgId, adminUid)) res.sendStatus(200);
+        else res.sendStatus(403);
     }
 
 }
