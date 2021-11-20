@@ -35,7 +35,7 @@ app.post('/getBasicOrganization', orgGeneral.getGeneralInfoOrganization);
 
 // pretendToken for testing
 function pretendToken(req, res, next) {
-    user = {
+    let user = {
         uid: req.body.fakeUID
     }
     req.user = user;
