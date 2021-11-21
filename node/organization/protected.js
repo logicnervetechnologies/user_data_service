@@ -113,13 +113,9 @@ deleteRoleFromOrganization = async (orgId, role) => {
     // TODO, remove role from org ONLY IF no user array in org is empty
     const existingRoles = await getRolesInOrganization(orgId);
     if (!existingRoles.some(roleArray => roleArray.length >= 0)) return false;
-    for (const [index, roleObj] of existingRoles.entries()) {
-        if (roleObj == role) {
-            orgCol.updateOne({ orgId }, { $pull: { roles: { role: role } } }, logAction);
-            return true;
-        }
-    }
-    return false;
+    if (!existingRoles.includes(role)) return false;
+    orgCol.updateOne({ orgId }, { $pull: { roles: { role: role } } }, logAction);
+    return true;
 }
 
 addUserToOrganization = async (orgId, role, userUid) => {
