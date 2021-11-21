@@ -149,13 +149,58 @@ addUserToOrganization = async (orgId, role, userUid) => {
     return false
 }
 
-shiftUserRoleInOrganization = async (orgId, userUid) => {
-    // TODO shift user to role within organization
+shiftUserRoleInOrganization = async (orgId, role, userUid) => {
+    const org = await getOrganizationData(orgId);
+    console.log(org.roles);
+    if (org.roles.every(roleObj => roleObj.role != role)) return false;
+
+    // attempt to remove user from any role, as well as the norole list
+    let found = false;
+    for (const roleObj of org.roles) {
+        if (roleObj.users.includes(userUid)) {
+            orgCol.updateOne({ orgId }, { $pull: {roles: {role: userUid }}}, logAction);
+            found = true;
+        }
+    }
+    
+    if (!found) {
+        if (org.noRole.includes(userUid)) {
+            orgCol.updateOne({ orgId }, { $pull: { noRole: userUid } }, logAction);
+            return true;
+        }
+    }
+
+    if (!found) return false;
+
+
+    // this also calls a part of user.js, fyi
+    return await addUserToOrganization(orgId, role, userUid);
+    
 }
 
 removeUserFromOrganization = async (orgId, userUid) => {
-    // TODO remove user from organization
-    // check to ensure user is not admin or owner
+    const org = await getOrganizationData(orgId);
+    if (org.admins.includes(userUid) || org.owner.includes(userUid)) return false;
+
+    for (const [index, roleObj] of org.roles.entries()) {
+        if (roleObj.users.includes(userUid)) {
+            orgCol.updateOne(
+                { orgId },
+                { $pull: {
+                    [`roles.${index}.users`]: userUid
+                },
+                logAction}
+            )
+            //orgCol.updateOne({ orgId }, { $pull: {roles: {role: userUid }}}, logAction);
+            return true;
+        }
+    }
+    
+    if (org.noRole.includes(userUid)) {
+        orgCol.updateOne({ orgId }, { $pull: { noRole: userUid } }, logAction);
+        return true;
+    }
+
 }
 
 changeOwnerOfOrganization = async (orgId, userUid) => {
@@ -200,6 +245,10 @@ const adminAction = async (req, res) => {
     } else if (action === 'deleteRoleFromOrganization') {
         const { role } = req.body;
         if (await deleteRoleFromOrganization(orgId, role)) res.sendStatus(200);
+        else res.sendStatus(403);
+    } else if (action === 'shiftUserRoleInOrganization') {
+        const { role, userUid } = req.body;
+        if (await shiftUserRoleInOrganization(orgId, role, userUid)) res.sendStatus(200);
         else res.sendStatus(403);
     }
 
