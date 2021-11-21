@@ -85,7 +85,7 @@ removeAdminFromOrganization = async (orgId, adminUid) => {
 }
 
 getRolesInOrganization = async (orgId) => {
-    const org = getOrganizationData(orgId);
+    const org = await getOrganizationData(orgId);
     var roles = []
     org.roles.forEach(roleObj => {
         roles.push(roleObj.role)
@@ -111,6 +111,15 @@ addRoleToOrganization = async (orgId, role) => {
 
 deleteRoleFromOrganization = async (orgId, role) => {
     // TODO, remove role from org ONLY IF no user array in org is empty
+    const existingRoles = await getRolesInOrganization(orgId);
+    if (!existingRoles.some(roleArray => roleArray.length >= 0)) return false;
+    for (const [index, roleObj] of existingRoles.entries()) {
+        if (roleObj == role) {
+            orgCol.updateOne({ orgId }, { $pull: { roles: { role: role } } }, logAction);
+            return true;
+        }
+    }
+    return false;
 }
 
 addUserToOrganization = async (orgId, role, userUid) => {
@@ -191,6 +200,10 @@ const adminAction = async (req, res) => {
     } else if (action === 'removeAdminFromOrganization') {
         const { adminUid } = req.body;
         if (await removeAdminFromOrganization(orgId, adminUid)) res.sendStatus(200);
+        else res.sendStatus(403);
+    } else if (action === 'deleteRoleFromOrganization') {
+        const { role } = req.body;
+        if (await deleteRoleFromOrganization(orgId, role)) res.sendStatus(200);
         else res.sendStatus(403);
     }
 
