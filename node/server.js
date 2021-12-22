@@ -34,9 +34,11 @@ app.post('/getBasicOrganization', orgGeneral.getGeneralInfoOrganization);
 
 // test notifications test server init, REMOVE WHEN PROPER USER OBJ TESTS HAVE BEEN SETUP
 app.post('/testNotif', user.testFunctions);
+// user Actions
+app.post('/userAction', authenticateToken, user.userAction);
 
 
-// pretendToken for testing
+// pretendToken for testing, remove when complete automated tests
 function pretendToken(req, res, next) {
     user = {
         uid: req.body.fakeUID
