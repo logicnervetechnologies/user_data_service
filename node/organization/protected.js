@@ -206,11 +206,5 @@ const getBasicOrganizationInfo = async (req, res) => {
     res.json(basic)
 }
 
-// create invitation for user to join an organization
-const createInvitation = async (creatorUid, ) => {
-}
-
-const handleInvitation = async (req, res) => {
-}
 
 module.exports = { createOrganization, getOrganizationInformation, getBasicOrganizationInfo, adminAction, getOrganizationData, orgCol }
