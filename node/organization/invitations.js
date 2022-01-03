@@ -34,19 +34,19 @@ const createInvite = async (creatorUid, inviteeUid, orgId, orgCol, logAction) =>
     notifyUser(inviteeUid, `You have been invited to join ${org.orgName}`, `HANDLE_INVITE_LINK_GOES_HERE`)
     return 1;
 
-}
+} // createInvite()
 
 const acceptInvite = (inviteeUid, orgId, inviteId) => {
 
-}
+} // acceptInvite()
 const declineInvite = (inviteeUid, orgId, inviteId) => {
 
-}
+} // declineInvite()
 const revokeInvite = (inviteeUid, orgId, inviteId) => {
 
-}
+} // revokeInvite()
 const deleteInvite = (inviteeUid, orgId, inviteId) => {
 
-}
+} // deleteInvite()
 
 module.exports = {createInvite, acceptInvite, declineInvite, revokeInvite, deleteInvite}

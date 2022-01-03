@@ -120,9 +120,9 @@ const deleteNotification = async (uid, nid) => {
     }
 }
 
-const addInviteIdToUser = async (uid, inviteId) => {
+const addInviteIdToUser = async (uid, inviteId, orgId) => {
     try {
-        await userCol.updateOne({ uid }, { $push: { invites: inviteId} }); //push to mongo user obj
+        await userCol.updateOne({ uid }, { $push: { invites: {inviteId, orgId}} }); //push to mongo user obj
     } catch (err) {
         console.error(err)
         return false;
@@ -132,7 +132,7 @@ const addInviteIdToUser = async (uid, inviteId) => {
 }
 const removeInviteIdFromUser = async (uid, inviteId) => {
     try {
-        await userCol.updateOne({ uid }, { $pull: { invites: inviteId} }); //push to mongo user obj
+        await userCol.updateOne({ uid }, { $pull: { invites: {inviteId} } }); //pull from mongo user obj
     } catch (err) {
         console.error(err)
         return false;
