@@ -45,6 +45,7 @@ const validInvite = (inviteeUid, orgId, inviteId) => {
 /* Accept an invitation and add the user to the organziation, return true if successful else false*/
 const acceptInvite = (inviteeUid, orgId, inviteId) => {
     // change invite status to 1
+    // add user to organization (no role?)
     // notify organization of accepted user
     return false
 } // acceptInvite()
