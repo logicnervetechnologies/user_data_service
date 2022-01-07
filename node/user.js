@@ -10,7 +10,7 @@ mongoose.connect(process.env.MONGOUSERSURI, {
 });
 
 const connection = mongoose.connection;
-const userCol = connection.collection('users') 
+const userCol = connection.collection('users')
 
 connection.once("open", function() {
   console.log("MongoDB database connection established successfully - users");
@@ -34,7 +34,7 @@ const createUserTmp = async (req, res) => {
         lName: req.body.lName,
         organizations:[]
     }
-    if (!exists(uDat.uid)) {
+    if (!await exists(uDat.uid)) {
         console.log("unauthorized")
         res.sendStatus(401)
     } else {
@@ -44,13 +44,13 @@ const createUserTmp = async (req, res) => {
 }
 
 const getUserData = async (uid) => {
-    var user = await userCol.findOne({uid:uid})
+    let user = await userCol.findOne({uid:uid})
     if (user) return user;
     return null;
 }
 
 const exists = async (uid) => {
-    var user = await getUserData(uid)
+    let user = await getUserData(uid)
     console.log("exist check")
     console.log(user)
     if (user) {
@@ -75,17 +75,15 @@ const getMyUserData = async (req, res) => {
 
 const addOrganizationToUser = async (uid, orgId) => {
     console.log(uid)
-    var updated = null;
+    let updated = null;
     try {
-        var userDataOrgs = (await getUserData(uid)).organizations
+        let userDataOrgs = (await getUserData(uid)).organizations
         userDataOrgs.push(orgId)
         await userCol.updateOne({uid:uid}, {$set:{organizations: userDataOrgs}});
     } catch (err) {
         console.error(err)
-    } finally  {
-        if (updated) return true;
-        else return false;
     }
+    return updated;
 }
 
 

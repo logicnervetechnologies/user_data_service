@@ -29,13 +29,13 @@ const createOrganization = async (req, res) => {
         roles: [],
         noRole:[]
     }
-    created = null;
+    let created = null;
     try {
         await client.connect()
         const orgs = client.db(process.env.USERDB).collection(process.env.ORGCOLLECTION)
         await orgs.insertOne(new_organization)
         // TODO add organization ID to user
-        created = new_organization.orgId;
+        let created = new_organization.orgId;
         await addOrganizationToUser(creatorUser.uid, new_organization.orgId);
     } catch (err) {
         console.log(err)
@@ -61,7 +61,7 @@ addAdminToOrganization = async (orgId, newAdminUid) => {
     const currentAdmins = await getAdminsOfOrganization(orgId);
     if (currentAdmins.includes(newAdminUid)) return false
     else { 
-        orgCol.updateOne({ orgId }, { $push: { admins: newAdminUid} }, logAction)
+        await orgCol.updateOne({ orgId }, { $push: { admins: newAdminUid} }, logAction)
         console.log(`User '${newAdminUid}' added as admin to organization '${orgId}'`)
         return true
     }
@@ -71,10 +71,10 @@ addAdminToOrganization = async (orgId, newAdminUid) => {
 removeAdminFromOrganization = async (orgId, adminUid) => {
     const currentAdmins = await getAdminsOfOrganization(orgId);
     // If there is only a single admin, removal is ill-defined.
-    if (currentAdmins.length == 1) {
+    if (currentAdmins.length === 1) {
         return false;
     } else if (currentAdmins.includes(adminUid)) { // if admin in list, remove
-        orgCol.updateOne({ orgId }, { $pull: { admins: adminUid } }, logAction);
+        await orgCol.updateOne({ orgId }, { $pull: { admins: adminUid } }, logAction);
         return true;
     } else { // missing!
         return false;
@@ -86,7 +86,7 @@ removeAdminFromOrganization = async (orgId, adminUid) => {
 
 getRolesInOrganization = async (orgId) => {
     const org = await getOrganizationData(orgId);
-    var roles = []
+    let roles = []
     org.roles.forEach(roleObj => {
         roles.push(roleObj.role)
     })    
@@ -102,7 +102,7 @@ addRoleToOrganization = async (orgId, role) => {
             role,
             users: []
         }
-        orgCol.updateOne({ orgId }, { $push: { roles: newRole} }, logAction)
+        await orgCol.updateOne({ orgId }, { $push: { roles: newRole} }, logAction)
         console.log(`Role '${role}' added to organization '${orgId}'`)
         return true
     }
@@ -114,7 +114,7 @@ deleteRoleFromOrganization = async (orgId, role) => {
     const existingRoles = await getRolesInOrganization(orgId);
     if (!existingRoles.some(roleArray => roleArray.length >= 0)) return false;
     if (!existingRoles.includes(role)) return false;
-    orgCol.updateOne({ orgId }, { $pull: { roles: { role: role } } }, logAction);
+    await orgCol.updateOne({ orgId }, { $pull: { roles: { role: role } } }, logAction);
     return true;
 }
 
@@ -124,25 +124,25 @@ addUserToOrganization = async (orgId, role, userUid) => {
     if (!role) {
         // check duplicates
         if (org.noRole.includes(userUid)) return false
-        orgCol.updateOne({ orgId }, { $push: { noRole: userUid }}, logAction)
-        addOrganizationToUser(userUid, orgId)
+        await orgCol.updateOne({ orgId }, { $push: { noRole: userUid }}, logAction)
+        await addOrganizationToUser(userUid, orgId)
         return true
     }
     // check if the role exists in the roles array
     for (const [index, roleObj] of org.roles.entries()) {
-        if (roleObj.role == role) {
+        if (roleObj.role === role) {
             // if user is already found, terminate
             if (roleObj.users.includes(userUid)) return false
             // this requires a precomputed key, since we need to specify the
             // array, which we do by iterating over indices as well
-            orgCol.updateOne(
+            await orgCol.updateOne(
                 { orgId },
                 { $push: {
                     [`roles.${index}.users`]: userUid
                 },
                 logAction}
             )
-            addOrganizationToUser(userUid, orgId)
+            await addOrganizationToUser(userUid, orgId)
             return true
         }
     }
@@ -158,14 +158,14 @@ shiftUserRoleInOrganization = async (orgId, role, userUid) => {
     let found = false;
     for (const roleObj of org.roles) {
         if (roleObj.users.includes(userUid)) {
-            orgCol.updateOne({ orgId }, { $pull: {roles: {role: userUid }}}, logAction);
+            await orgCol.updateOne({ orgId }, { $pull: {roles: {role: userUid }}}, logAction);
             found = true;
         }
     }
     
     if (!found) {
         if (org.noRole.includes(userUid)) {
-            orgCol.updateOne({ orgId }, { $pull: { noRole: userUid } }, logAction);
+            await orgCol.updateOne({ orgId }, { $pull: { noRole: userUid } }, logAction);
             return true;
         }
     }
@@ -184,7 +184,7 @@ removeUserFromOrganization = async (orgId, userUid) => {
 
     for (const [index, roleObj] of org.roles.entries()) {
         if (roleObj.users.includes(userUid)) {
-            orgCol.updateOne(
+            await orgCol.updateOne(
                 { orgId },
                 { $pull: {
                     [`roles.${index}.users`]: userUid
@@ -197,7 +197,7 @@ removeUserFromOrganization = async (orgId, userUid) => {
     }
     
     if (org.noRole.includes(userUid)) {
-        orgCol.updateOne({ orgId }, { $pull: { noRole: userUid } }, logAction);
+        await orgCol.updateOne({ orgId }, { $pull: { noRole: userUid } }, logAction);
         return true;
     }
 
@@ -217,7 +217,7 @@ logAction = (err, object) => {
 const adminAction = async (req, res) => {
     const requester = req.user.uid
     const { action, orgId } = req.body
-    orgAdmins = await getAdminsOfOrganization(orgId)
+    let orgAdmins = await getAdminsOfOrganization(orgId)
     console.log(orgAdmins)
     if (!(orgAdmins.includes(requester))) {
         console.log(orgAdmins)
@@ -255,7 +255,7 @@ const adminAction = async (req, res) => {
 }
 
 const getOrganizationData = async (orgId) => {
-    var organization = await orgCol.findOne({ orgId })
+    const organization = await orgCol.findOne({ orgId })
     return organization
 }
 
