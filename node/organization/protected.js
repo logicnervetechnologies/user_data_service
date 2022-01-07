@@ -79,9 +79,6 @@ removeAdminFromOrganization = async (orgId, adminUid) => {
     } else { // missing!
         return false;
     }
-
-    // TODO remove new admin to organization with orgid
-    // must make sure there is at least one admin within organization post-removal
 }
 
 getRolesInOrganization = async (orgId) => {
@@ -94,7 +91,6 @@ getRolesInOrganization = async (orgId) => {
 }
 
 addRoleToOrganization = async (orgId, role) => {
-    // TODO, create role object with no users to be added to organization
     const existingRoles = await getRolesInOrganization(orgId)
     if (existingRoles.includes(role)) return false
     else {
@@ -106,11 +102,9 @@ addRoleToOrganization = async (orgId, role) => {
         console.log(`Role '${role}' added to organization '${orgId}'`)
         return true
     }
-    
 }
 
 deleteRoleFromOrganization = async (orgId, role) => {
-    // TODO, remove role from org ONLY IF no user array in org is empty
     const existingRoles = await getRolesInOrganization(orgId);
     if (!existingRoles.some(roleArray => roleArray.length >= 0)) return false;
     if (!existingRoles.includes(role)) return false;
@@ -152,7 +146,7 @@ addUserToOrganization = async (orgId, role, userUid) => {
 shiftUserRoleInOrganization = async (orgId, role, userUid) => {
     const org = await getOrganizationData(orgId);
     console.log(org.roles);
-    if (org.roles.every(roleObj => roleObj.role != role)) return false;
+    if (org.roles.every(roleObj => roleObj.role !== role)) return false;
 
     // attempt to remove user from any role, as well as the norole list
     let found = false;
@@ -169,13 +163,10 @@ shiftUserRoleInOrganization = async (orgId, role, userUid) => {
             return true;
         }
     }
-
     if (!found) return false;
-
 
     // this also calls a part of user.js, fyi
     return await addUserToOrganization(orgId, role, userUid);
-    
 }
 
 removeUserFromOrganization = async (orgId, userUid) => {
@@ -203,10 +194,12 @@ removeUserFromOrganization = async (orgId, userUid) => {
 
 }
 
-changeOwnerOfOrganization = async (orgId, userUid) => {
-    // TODO change owner of organization
-    // Check to ensure uid of requester is owner
-    // TODO implement some form of verification via email or something to complete this action
+changeOwnerOfOrganization = async (orgId, userUid, newUserUid) => {
+    const org = await getOrganizationData(orgId);
+    if (!org.owner.includes(userUid)) return false;
+    await orgCol.updateOne({ orgId }, { $pull: { admin: userUid } }, logAction);
+    await orgCol.updateOne( { orgId }, { $push: {admin: newUserUid } }, logAction);
+    return true;
 }
 
 logAction = (err, object) => {
@@ -249,6 +242,10 @@ const adminAction = async (req, res) => {
     } else if (action === 'shiftUserRoleInOrganization') {
         const { role, userUid } = req.body;
         if (await shiftUserRoleInOrganization(orgId, role, userUid)) res.sendStatus(200);
+        else res.sendStatus(403);
+    } else if (action === 'changeOwnerOfOrganization') {
+        const { userUid, newUserUid } = req.body;
+        if (await changeOwnerOfOrganization(orgId, userUid, newUserUid)) res.sendStatus(200);
         else res.sendStatus(403);
     }
 
