@@ -209,7 +209,8 @@ logAction = (err, object) => {
 
 const adminAction = async (req, res) => {
     const requester = req.user.uid
-    const { action, orgId } = req.body
+    const { action, orgId } = req.body // basic args
+    // ensure requester is admin in organization
     let orgAdmins = await getAdminsOfOrganization(orgId)
     console.log(orgAdmins)
     if (!(orgAdmins.includes(requester))) {
@@ -222,6 +223,13 @@ const adminAction = async (req, res) => {
         const { newAdmin } = req.body
         if (newAdmin == null) res.sendStatus(400);
         if (await addAdminToOrganization(orgId, newAdmin)) {
+            res.sendStatus(200)
+        } else {
+            res.sendStatus(403)
+        }
+    } else if (action === 'addRoleToOrganization') {
+        const { role } = req.body
+        if (await addRoleToOrganization(orgId, role)) {
             res.sendStatus(200)
         } else {
             res.sendStatus(403)
