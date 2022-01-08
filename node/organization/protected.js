@@ -90,7 +90,8 @@ getRolesInOrganization = async (orgId) => {
     return roles
 }
 
-addRoleToOrganization = async (orgId, role) => {
+addRoleToOrganization = async (orgId, newrole) => {
+    const role = newrole.toUpperCase()
     const existingRoles = await getRolesInOrganization(orgId)
     if (existingRoles.includes(role)) return false
     else {
