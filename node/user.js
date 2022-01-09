@@ -85,8 +85,17 @@ const addOrganizationToUser = async (uid, orgId) => {
     }
     return updated;
 }
+const removeOrganizationFromUser = async (uid, orgId) => {
+    console.log(uid)
+    try {
+        await userCol.updateOne({uid}, {$pull: {organizations: orgId}})
+    } catch (err) {
+        console.error(err)
+        return false
+    }
+    return true;
+}
 
 
 
-
-module.exports = { getMyUserData, createUserTmp, addOrganizationToUser }
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser }
