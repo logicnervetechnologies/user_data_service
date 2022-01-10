@@ -28,23 +28,20 @@ const createOrganization = async (req, res) => {
         admins: [creatorUser.uid],
         owner: [creatorUser.uid],
         roles: [],
-        members: [],
+        members: [{
+            uid: creatorUser.uid,
+            roles:[]
+        }],
         noRole:[]
     }
     let created = null;
     try {
-        await client.connect()
-        const orgs = client.db(process.env.USERDB).collection(process.env.ORGCOLLECTION)
-        await orgs.insertOne(new_organization)
-        // TODO add organization ID to user
-        created = new_organization.orgId;
+        await orgCol.insertOne(new_organization)
         await addOrganizationToUser(creatorUser.uid, new_organization.orgId);
     } catch (err) {
         console.log(err)
         res.sendStatus(500)
-    } finally {
-        await client.close()
-    }
+    } 
     res.json({ orgId: created })
 
     //console.log(req.user)
@@ -121,7 +118,10 @@ removeMemberFromOrganization = async (orgId, uid) => {
 getAdminsOfOrganization = async (orgId) => {
     //TODO get admins of org
     const org = await getOrganizationData(orgId)
-    if (org === null ) return null;
+    if (org === null ) { 
+        console.log("org not found")
+        return null;
+    }
     console.log(`Admins requested from org ${orgId}`)
     return org.admins;
 }
@@ -130,6 +130,8 @@ getAdminsOfOrganization = async (orgId) => {
 addAdminToOrganization = async (orgId, newAdminUid) => {
     // TODO add new admin to organization with orgid
     // check if admin is already listed as admin
+    console.log("adding admin intro function")
+    console.log(`add user: ${newAdminUid} as admin in ${orgId}`)
     const currentAdmins = await getAdminsOfOrganization(orgId);
     if (currentAdmins.includes(newAdminUid)) return false
     // if not member of org, return false
@@ -237,6 +239,7 @@ removeMemberFromRole = async (orgId, uid, role) => {
 /* user organization functions */
 // add a user to a organization as a memeber, admin action
 addUserToOrganization = async (orgId, role, userUid) => {
+    console.log("Adding User to Organization")
     // check if org exists
     const org = await getOrganizationData(orgId)
     if (org === null) return false
@@ -244,7 +247,7 @@ addUserToOrganization = async (orgId, role, userUid) => {
     if (await isMemberOfOrganization(orgId, userUid)) return false
     // add user to organization memebers
     await addMemberToOrganization(orgId, userUid)
-    await addOrganizationToUser()
+    await addOrganizationToUser(userUid, orgId)
     // role is empty or null -> no role
     if (!role) {
         return true
@@ -267,7 +270,7 @@ removeUserFromOrganization = async (orgId, userUid) => {
     // if user is admin or owner, return false
     if (org.admins.includes(userUid) || org.owner.includes(userUid)) return false;
     // for all roles user is in, remove him/her from role
-    member.roles.forEach(role => {
+    member.roles.forEach(async (role) => {
         await removeMemberFromRole(orgId, userUid, role)
     })
     // remove organization from user and pull user from organization
@@ -324,14 +327,17 @@ const adminAction = async (req, res) => {
     const { action, orgId } = req.body // basic args
     // ensure requester is admin in organization
     let orgAdmins = await getAdminsOfOrganization(orgId)
-    console.log(orgAdmins)
+    console.log(`Admin Action: ${action} on organization: ${orgId}`)
+    //console.log(orgAdmins)
     if (!(orgAdmins.includes(requester))) {
+        console.log(`requester is not an admin`)
         console.log(orgAdmins)
         console.log(requester)
         res.sendStatus(401);
         return
     }
-    if (action === 'addAdminToOrg') {
+    if (action === 'addAdminToOrganization') {
+        //console.log(`add user: ${newAdmin} as admin in ${orgId}`)
         const { newAdmin } = req.body
         if (newAdmin == null) res.sendStatus(400);
         if (await addAdminToOrganization(orgId, newAdmin)) {
@@ -346,6 +352,7 @@ const adminAction = async (req, res) => {
     } else if (action === 'addUserToOrganization') {
         // add a new user to the organization
         const { newUser, role } = req.body
+        console.log(newUser)
         if (newUser == null) res.sendStatus(400)
         if (await addUserToOrganization(orgId, role, newUser)) res.sendStatus(200)
         else res.sendStatus(403)
