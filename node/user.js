@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const struct = require("./structure.js");
 require("dotenv").config()
+const { v4 : uuidv4 } = require('uuid')
 
 
 const userStruct = new mongoose.Schema(struct.userDef);
@@ -96,6 +97,53 @@ const removeOrganizationFromUser = async (uid, orgId) => {
     return true;
 }
 
+const notifyUser = async (uid, notifData, notifHyperlink = null) => {
+    // create notification object
+    console.log("notifying " + uid);
+    newNotif = {
+        notifData,
+        notifHyperlink,
+        nid: uuidv4(),
+        date: Date()
+    };
+    try {
+        await userCol.updateOne({ uid }, { $push: { notifications: newNotif} }); //push to mongo user obj
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
+}
+
+const deleteNotification = async (uid, nid) => {
+    console.log("deleting notification " + nid + " from " + uid);
+    try {
+        await userCol.updateOne({ uid }, { $pull: { notifications: { nid }} }); //pull from mongo user obj
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
+}
+
+const userAction = async (req, res) => {
+    const uid = req.user.uid;
+    console.log('uid')
+    console.log(uid)
+    console.log(req.body.action)
+    if (req.body.action === 'createNotif') {
+        const notifData = req.body.notifData;
+        const notified = await notifyUser(uid, notifData);
+        res.send({notified})
+    } else if (req.body.action === "removeNotif") {
+        const nid = req.body.nid;
+        const removed = await deleteNotification(uid, nid);
+        res.send({removed});
+    }
+}
 
 
-module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser }
+
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser, notifyUser, userAction}
