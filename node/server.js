@@ -27,7 +27,7 @@ app.post('/posts', authenticateToken,(req, res) => {
 //private org info routes
 app.post('/getOrganization', organization.getOrganizationInformation)
 .post('/createOrganization', authenticateToken, organization.createOrganization)
-.post('/adminAction', pretendToken, organization.adminAction);
+.post('/adminAction', authenticateToken, organization.adminAction);
 
 //general org info routes
 app.post('/getBasicOrganization', orgGeneral.getGeneralInfoOrganization);
@@ -38,7 +38,7 @@ app.post('/userAction', authenticateToken, user.userAction);
 
 // pretendToken for testing, remove when complete automated tests
 function pretendToken(req, res, next) {
-    user = {
+    let user = {
         uid: req.body.fakeUID
     }
     req.user = user;
