@@ -69,6 +69,7 @@ addMemberToOrganization = async (orgId, uid) => {
     return true
 }
 addRoleToMember = async (orgId, uid, role) => {
+    const org = await getOrganizationData(orgId)
     for (const [index, member] of org.members.entries()) {
         if (member.uid === uid) {
             // if user is already found, terminate
@@ -88,6 +89,7 @@ addRoleToMember = async (orgId, uid, role) => {
     return false
 }
 removeRoleFromMember = async (orgId, uid, role) => {
+    const org = await getOrganizationData(orgId)
     for (const [index, member] of org.members.entries()) {
         if (member.uid === uid) {
             // if user is already found, terminate
@@ -195,6 +197,7 @@ deleteRoleFromOrganization = async (orgId, role) => {
 }
 
 addMemberToRole = async (orgId, uid, role) => {
+    const org = await getOrganizationData(orgId)
     for (const [index, roleObj] of org.roles.entries()) {
         if (roleObj.role === role) {
             // if user is already found, terminate
@@ -215,6 +218,7 @@ addMemberToRole = async (orgId, uid, role) => {
 }
 // remove a member from a certain role
 removeMemberFromRole = async (orgId, uid, role) => {
+    const org = await getOrganizationData(orgId)
     for (const [index, roleObj] of org.roles.entries()) {
         if (roleObj.role === role) {
             // if user is not found, terminate
