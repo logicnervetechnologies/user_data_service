@@ -25,7 +25,7 @@ app.post('/posts', authenticateToken,(req, res) => {
 .post('/getMyUserData', authenticateToken, user.getMyUserData);
 
 //private org info routes
-app.post('/getOrganization', organization.getOrganizationInformation)
+app.post('/getOrganization', authenticateToken, organization.getOrganizationInformation)
 .post('/createOrganization', authenticateToken, organization.createOrganization)
 .post('/adminAction', authenticateToken, organization.adminAction);
 

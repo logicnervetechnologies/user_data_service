@@ -407,12 +407,21 @@ const getOrganizationData = async (orgId) => {
 
 const getOrganizationInformation = async (req, res) => {
     //Authentication check needs to be implmemented
-    //TODO: check if user is in org, give extended info, else basic info
-    const orgId = req.body.orgId;
-    console.log(`Requesting org: ${orgId}`)
-    console.log(orgId)
-    const organization = await getOrganizationData(orgId)
-    res.json(organization)
+    try {
+        const uid = req.user.uid
+        const orgId = req.body.orgId;
+        console.log(`Requesting org: ${orgId}`)
+        console.log(orgId)
+        const members = await getMembersOfOrganization(orgId)
+        if (members.includes(uid)) {
+            const organization = await getOrganizationData(orgId)
+            res.json(organization)
+        } else {
+            res.sendStatus(401)
+        }
+    } catch (err) {
+        res.sendStatus(403)
+    }
 }
 
 const getBasicOrganizationInfo = async (req, res) => {
