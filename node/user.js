@@ -128,6 +128,27 @@ const deleteNotification = async (uid, nid) => {
     }
 }
 
+const addInviteIdToUser = async (uid, inviteId, orgId) => {
+    try {
+        await userCol.updateOne({ uid }, { $push: { invites: {inviteId, orgId}} }); //push to mongo user obj
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
+}
+const removeInviteIdFromUser = async (uid, inviteId) => {
+    try {
+        await userCol.updateOne({ uid }, { $pull: { invites: {inviteId} } }); //pull from mongo user obj
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
+}
+
 const userAction = async (req, res) => {
     const uid = req.user.uid;
     console.log('uid')
@@ -146,4 +167,4 @@ const userAction = async (req, res) => {
 
 
 
-module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser, notifyUser, userAction}
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser, notifyUser, userAction, addInviteIdToUser, removeInviteIdFromUser}

@@ -434,4 +434,5 @@ const getBasicOrganizationInfo = async (req, res) => {
     res.json(basic)
 }
 
-module.exports = { createOrganization, getOrganizationInformation, getBasicOrganizationInfo, adminAction, getOrganizationData, orgCol }
+
+module.exports = { createOrganization, getOrganizationInformation, getBasicOrganizationInfo, adminAction, getOrganizationData, addUserToOrganization, orgCol }
