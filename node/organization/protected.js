@@ -2,6 +2,7 @@ const { MongoClient } = require('mongodb')
 const mongoose = require('mongoose')
 const { v4 : uuidv4 } = require('uuid')
 const { addOrganizationToUser, removeOrganizationFromUser } = require('../user.js')
+const { createInvite } = require("./invitations.js")
 require("dotenv").config()
 
 const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -358,7 +359,7 @@ const adminAction = async (req, res) => {
         const { newUser, role } = req.body
         console.log(newUser)
         if (newUser == null) res.sendStatus(400)
-        if (await addUserToOrganization(orgId, role, newUser)) res.sendStatus(200)
+        if (await createInvite(requester, newUser, orgId, orgCol)) res.sendStatus(200)
         else res.sendStatus(403)
     } else if (action === 'removeUserFromOrganization') {
         // add a new user to the organization
