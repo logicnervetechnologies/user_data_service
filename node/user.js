@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const struct = require("./structure.js");
+const { acceptInvite } = require("./organization/invitations")
 require("dotenv").config()
 const { v4 : uuidv4 } = require('uuid')
 
@@ -146,14 +147,23 @@ const userAction = async (req, res) => {
     console.log('uid')
     console.log(uid)
     console.log(req.body.action)
-    if (req.body.action === 'createNotif') {
-        const notifData = req.body.notifData;
-        const notified = await notifyUser(uid, notifData);
-        res.send({notified})
-    } else if (req.body.action === "removeNotif") {
-        const nid = req.body.nid;
-        const removed = await deleteNotification(uid, nid);
-        res.send({removed});
+    switch (req.body.action){
+        case 'createNotif':
+            const notifData = req.body.notifData;
+            const notified = await notifyUser(uid, notifData);
+            res.send({notified})
+            break;
+        case 'removeNotif':
+            const nid = req.body.nid;
+            const removed = await deleteNotification(uid, nid);
+            res.send({removed});
+            break;
+        case 'acceptInvite':
+            if (await acceptInvite(inviteeUid, inviteId, orgId, orgCol)) res.sendStatus(200)
+            else res.sendStatus(403)
+            break;
+        default:
+            res.sendStatus(400)
     }
 }
 
