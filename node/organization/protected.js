@@ -2,6 +2,7 @@ const { MongoClient } = require('mongodb')
 const mongoose = require('mongoose')
 const { v4 : uuidv4 } = require('uuid')
 const { addOrganizationToUser, removeOrganizationFromUser } = require('../user.js')
+const { createInvite } = require('./invitations')
 require("dotenv").config()
 
 const client = new MongoClient(process.env.MONGOURI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -242,7 +243,7 @@ removeMemberFromRole = async (orgId, uid, role) => {
 
 /* user organization functions */
 // add a user to a organization as a memeber, admin action
-addUserToOrganization = async (orgId, role, userUid) => {
+const addUserToOrganization = async (orgId, role, userUid) => {
     console.log("Adding User to Organization")
     // check if org exists
     const org = await getOrganizationData(orgId)
@@ -321,7 +322,7 @@ changeOwnerOfOrganization = async (orgId, userUid, newUserUid) => {
     return true;
 }
 
-logAction = (err, object) => {
+const logAction = (err, object) => {
     // if (err) console.error(err)
     // if (object) console.log(object)
 }
@@ -353,12 +354,12 @@ const adminAction = async (req, res) => {
         const { adminUid } = req.body;
         if (await removeAdminFromOrganization(orgId, adminUid)) res.sendStatus(200);
         else res.sendStatus(403);
-    } else if (action === 'addUserToOrganization') {
+    } else if (action === 'inviteUserToOrganization') {
         // add a new user to the organization
-        const { newUser, role } = req.body
+        const { newUser } = req.body
         console.log(newUser)
         if (newUser == null) res.sendStatus(400)
-        if (await addUserToOrganization(orgId, role, newUser)) res.sendStatus(200)
+        if (await createInvite(requester, newUser, orgId, logAction)) res.sendStatus(200)
         else res.sendStatus(403)
     } else if (action === 'removeUserFromOrganization') {
         // add a new user to the organization

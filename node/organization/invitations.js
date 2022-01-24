@@ -1,11 +1,11 @@
 const { v4 : uuidv4 } = require('uuid')
-const { getOrganizationData, addUserToOrganization } = require('./protected')
+const { getOrganizationData, addUserToOrganization, orgCol } = require('./protected')
 const { addInviteIdToUser, removeInviteIdFromUser, notifyUser } = require('../user')
 require("dotenv").config()
 
 
 // create invitation for user to join an organization, return 1 if created, 2 if user already invited, -1 if creation failed
-const createInvite = async (creatorUid, inviteeUid, orgId, orgCol, logAction) => {
+const createInvite = async (creatorUid, inviteeUid, orgId, logAction) => {
     // check if invitation for user exists for user already
     const org = getOrganizationData(orgId)
     const alreadyInvited = org.invitations.some(invite, invite.inviteeUid === inviteeUid)
@@ -48,7 +48,7 @@ const validInvite = async (inviteeUid, inviteId, orgId) => {
 } // validInvite()
 
 /* Accept an invitation and add the user to the organziation, return true if successful else false*/
-const acceptInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
+const acceptInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
     if (!(await validInvite(inviteeUid, orgId, inviteId))) {
         console.log("invitation not valid")
@@ -73,7 +73,7 @@ const acceptInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
 
 /* Decline an invitation to join organization and notify organiztion of declination,
  return true if successful else false */
-const declineInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
+const declineInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
     if (!(await validInvite(inviteeUid, orgId, inviteId))) {
         console.log("invitation not valid")
@@ -95,7 +95,7 @@ const declineInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
 } // declineInvite()
 
 /* Revoke an invite for user joining org */
-const revokeInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
+const revokeInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
     if (!(await validInvite(inviteeUid, orgId, inviteId))) {
         console.log("invitation not valid")
@@ -113,7 +113,7 @@ const revokeInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
 } // revokeInvite()
 
 /* delete invitation record from organization */
-const deleteInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
+const deleteInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
     if (!(await validInvite(inviteeUid, orgId, inviteId))) {
         console.log("invitation not valid")
@@ -130,7 +130,7 @@ const deleteInvite = async (inviteeUid, inviteId, orgId, orgCol) => {
 } // deleteInvite()
 
 /* temporary placement */
-const notifyOrganization = async (orgId, orgCol, notifData, notifHyperlink = null) => {
+const notifyOrganization = async (orgId, notifData, notifHyperlink = null) => {
     // create notification object
     console.log("notifying " + orgId);
     newNotif = {
