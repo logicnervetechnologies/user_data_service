@@ -2,7 +2,6 @@ const { orgCol, userCol } = require('./resources')
 const { acceptInvite, declineInvite } = require("./organization/invitations")
 const { notifyUser } = require('./notifications/notifications')
 require("dotenv").config()
-const { v4 : uuidv4 } = require('uuid')
 
 
 const createUser = async ( newUser ) => {
