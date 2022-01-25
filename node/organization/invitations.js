@@ -1,21 +1,29 @@
 const { v4 : uuidv4 } = require('uuid')
-const { getOrganizationData, addUserToOrganization, orgCol } = require('./protected')
-const { addInviteIdToUser, removeInviteIdFromUser, notifyUser } = require('../user')
+const { addUserToOrganization } = require('./orgUser')
+const { orgCol, userCol } = require('../resources') 
+const { notifyUser, notifyOrganization} = require('../notifications/notifications')
+const {logAction} = require('../log')
 require("dotenv").config()
 
+const getOrganizationData = async (orgId) => {
+    const organization = await orgCol.findOne({ orgId })
+    return organization
+}
 
 // create invitation for user to join an organization, return 1 if created, 2 if user already invited, -1 if creation failed
-const createInvite = async (creatorUid, inviteeUid, orgId, logAction) => {
+const createInvite = async (creatorUid, inviteeUid, orgId) => {
+    console.log("Create INvite invoked")
     // check if invitation for user exists for user already
-    const org = getOrganizationData(orgId)
-    const alreadyInvited = org.invitations.some(invite, invite.inviteeUid === inviteeUid)
+    const org = await getOrganizationData(orgId, orgCol)
+    const alreadyInvited = org.invitations.some((invite) => invite.inviteeUid === inviteeUid)
     if (alreadyInvited) {
         console.log("user already invited")
         return 2
     }
     // create invitation object
+    const inviteId = uuidv4()
     const invitation = {
-        inviteId: uuidv4(),
+        inviteId: inviteId,
         orgId,
         status: 0, // status codes: 0: no response yet, -1: revoked, 1: accepted, 2: decline
         creatorUid,
@@ -23,13 +31,13 @@ const createInvite = async (creatorUid, inviteeUid, orgId, logAction) => {
         creationDate: Date.now()
     }
     // add invite to organization object
-    orgCol.updateOne(
+   await orgCol.updateOne(
         { orgId },
-        { $push: { invites: invitation },
+        { $push: { invitations: invitation },
         logAction}
     )
     // add inviteid to user object
-    await addInviteIdToUser(inviteeId, invitation.inviteId, orgId);
+    await addInviteIdToUser(inviteeUid, inviteId, orgId);
     // notify invitee of invite
     await notifyUser(inviteeUid, `You have been invited to join ${org.orgName}`, `HANDLE_INVITE_LINK_GOES_HERE`)
     return 1;
@@ -39,7 +47,7 @@ const createInvite = async (creatorUid, inviteeUid, orgId, logAction) => {
 /* Check if an invitation is valid -- to be called before any actions besides create */
 const validInvite = async (inviteeUid, inviteId, orgId) => {
     // check if invite exists
-    const org = await getOrganizationData(orgId)
+    const org = await getOrganizationData(orgId, orgCol)
     if (!org.invitations.some(invite, invite.inviteId === inviteId)) {
         return false
     }
@@ -50,7 +58,7 @@ const validInvite = async (inviteeUid, inviteId, orgId) => {
 /* Accept an invitation and add the user to the organziation, return true if successful else false*/
 const acceptInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
-    if (!(await validInvite(inviteeUid, orgId, inviteId))) {
+    if (!(await validInvite(inviteeUid, inviteId, orgId, orgCol))) {
         console.log("invitation not valid")
         return false
     }
@@ -58,10 +66,10 @@ const acceptInvite = async (inviteeUid, inviteId, orgId) => {
     // change invite status to 1
     const query = { 
         orgId: orgId, 
-        "invites.inviteId": inviteId
+        "invitations.inviteId": inviteId
     };
 
-    await orgCol.updateOne(query, { $set: { "invites.$.status": 1 } }, logAction)
+    await orgCol.updateOne(query, { $set: { "invitations.$.status": 1 } }, logAction)
     // add user to organization (no role?)
     await addUserToOrganization(orgId, null, inviteeUid)
     // notify organization of accepted user
@@ -75,7 +83,7 @@ const acceptInvite = async (inviteeUid, inviteId, orgId) => {
  return true if successful else false */
 const declineInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
-    if (!(await validInvite(inviteeUid, orgId, inviteId))) {
+    if (!(await validInvite(inviteeUid, inviteId, orgId, orgCol))) {
         console.log("invitation not valid")
         return false
     }
@@ -83,10 +91,10 @@ const declineInvite = async (inviteeUid, inviteId, orgId) => {
     // Change invite status to 2
     const query = { 
         orgId: orgId, 
-        "invites.inviteId": inviteId
+        "invitations.inviteId": inviteId
     };
 
-    await orgCol.updateOne(query, { $set: { "invites.$.status": 2 } }, logAction)
+    await orgCol.updateOne(query, { $set: { "invitations.$.status": 2 } }, logAction)
 
     // notify organization admins
     await notifyOrganization(orgId, orgCol, "Invitation " + inviteId + " declined")
@@ -97,7 +105,7 @@ const declineInvite = async (inviteeUid, inviteId, orgId) => {
 /* Revoke an invite for user joining org */
 const revokeInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
-    if (!(await validInvite(inviteeUid, orgId, inviteId))) {
+    if (!(await validInvite(inviteeUid, inviteId, orgId, orgCol))) {
         console.log("invitation not valid")
         return false
     }
@@ -105,17 +113,17 @@ const revokeInvite = async (inviteeUid, inviteId, orgId) => {
     // change invite status to -1
     const query = { 
         orgId: orgId, 
-        "invites.inviteId": inviteId
+        "invitations.inviteId": inviteId
     };
 
-    await orgCol.updateOne(query, { $set: { "invites.$.status": -1 } }, logAction)
+    await orgCol.updateOne(query, { $set: { "invitations.$.status": -1 } }, logAction)
     return true
 } // revokeInvite()
 
 /* delete invitation record from organization */
 const deleteInvite = async (inviteeUid, inviteId, orgId) => {
     // validate invite
-    if (!(await validInvite(inviteeUid, orgId, inviteId))) {
+    if (!(await validInvite(inviteeUid, inviteId, orgId, orgCol))) {
         console.log("invitation not valid")
         return false
     }
@@ -129,18 +137,20 @@ const deleteInvite = async (inviteeUid, inviteId, orgId) => {
 
 } // deleteInvite()
 
-/* temporary placement */
-const notifyOrganization = async (orgId, notifData, notifHyperlink = null) => {
-    // create notification object
-    console.log("notifying " + orgId);
-    newNotif = {
-        notifData,
-        notifHyperlink,
-        nid: uuidv4(),
-        date: Date()
-    };
+
+const addInviteIdToUser = async (uid, inviteId, orgId) => {
     try {
-        await orgCol.updateOne({ orgId }, { $push: { notifications: newNotif} }); //push to mongo organization obj
+        await userCol.updateOne({ uid }, { $push: { invitations: {inviteId, orgId}} }); //push to mongo user obj
+    } catch (err) {
+        console.error(err)
+        return false;
+    } finally {
+        return true;
+    }
+}
+const removeInviteIdFromUser = async (uid, inviteId) => {
+    try {
+        await userCol.updateOne({ uid }, { $pull: { invitations: {inviteId} } }); //pull from mongo user obj
     } catch (err) {
         console.error(err)
         return false;

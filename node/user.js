@@ -1,22 +1,9 @@
-const mongoose = require('mongoose')
-const struct = require("./structure.js");
+const { orgCol, userCol } = require('./resources')
 const { acceptInvite, declineInvite } = require("./organization/invitations")
+const { notifyUser } = require('./notifications/notifications')
 require("dotenv").config()
 const { v4 : uuidv4 } = require('uuid')
 
-
-const userStruct = new mongoose.Schema(struct.userDef);
-mongoose.connect(process.env.MONGOUSERSURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
-
-const connection = mongoose.connection;
-const userCol = connection.collection('users')
-
-connection.once("open", function() {
-  console.log("MongoDB database connection established successfully - users");
-});
 
 const createUser = async ( newUser ) => {
     // var User = userCol.model("user", userStruct)
@@ -98,50 +85,11 @@ const removeOrganizationFromUser = async (uid, orgId) => {
     return true;
 }
 
-const notifyUser = async (uid, notifData, notifHyperlink = null) => {
-    // create notification object
-    console.log("notifying " + uid);
-    newNotif = {
-        notifData,
-        notifHyperlink,
-        nid: uuidv4(),
-        date: Date()
-    };
-    try {
-        await userCol.updateOne({ uid }, { $push: { notifications: newNotif} }); //push to mongo user obj
-    } catch (err) {
-        console.error(err)
-        return false;
-    } finally {
-        return true;
-    }
-}
 
 const deleteNotification = async (uid, nid) => {
     console.log("deleting notification " + nid + " from " + uid);
     try {
         await userCol.updateOne({ uid }, { $pull: { notifications: { nid }} }); //pull from mongo user obj
-    } catch (err) {
-        console.error(err)
-        return false;
-    } finally {
-        return true;
-    }
-}
-
-const addInviteIdToUser = async (uid, inviteId, orgId) => {
-    try {
-        await userCol.updateOne({ uid }, { $push: { invites: {inviteId, orgId}} }); //push to mongo user obj
-    } catch (err) {
-        console.error(err)
-        return false;
-    } finally {
-        return true;
-    }
-}
-const removeInviteIdFromUser = async (uid, inviteId) => {
-    try {
-        await userCol.updateOne({ uid }, { $pull: { invites: {inviteId} } }); //pull from mongo user obj
     } catch (err) {
         console.error(err)
         return false;
@@ -191,4 +139,4 @@ const userAction = async (req, res) => {
 
 
 
-module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser, notifyUser, userAction, addInviteIdToUser, removeInviteIdFromUser}
+module.exports = { getMyUserData, createUserTmp, addOrganizationToUser, removeOrganizationFromUser, userAction}
