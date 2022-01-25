@@ -1,4 +1,5 @@
 const { orgCol } = require('../resources')
+const {logAction} = require('../log')
 /* MEMBER FUNCTIONS */
 
 const getOrganizationData = async (orgId) => {
@@ -66,7 +67,10 @@ const removeRoleFromMember = async (orgId, uid, role) => {
     return false
 }
 const removeMemberFromOrganization = async (orgId, uid) => {
-    if (!(await isMemberOfOrganization(orgId, uid))) return false,
+    if (!(await isMemberOfOrganization(orgId, uid))) {
+        console.log("user not in org")
+        return false
+    }
     await orgCol.updateOne({ orgId }, { $pull: { members: { uid } } }, logAction);
     return true
 }

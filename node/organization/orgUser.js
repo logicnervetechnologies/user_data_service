@@ -4,11 +4,42 @@ const {isMemberOfOrganization, getMember,
     removeMemberFromOrganization} = require('./member')
 const {isRole, addMemberToRole, removeMemberFromRole} = require('./role')
 // add a user to a organization as a memeber, admin action
-const { orgCol } = require('../resources')
+const { orgCol, userCol } = require('../resources')
+
+
+const getUserData = async (uid) => {
+    let user = await userCol.findOne({uid:uid})
+    if (user) return user;
+    return null;
+}
+
 const getOrganizationData = async (orgId) => {
     const organization = await orgCol.findOne({ orgId })
     return organization
 }
+const addOrganizationToUser = async (uid, orgId) => {
+    console.log(uid)
+    let updated = null;
+    try {
+        let userDataOrgs = (await getUserData(uid)).organizations
+        userDataOrgs.push(orgId)
+        await userCol.updateOne({uid:uid}, {$set:{organizations: userDataOrgs}});
+    } catch (err) {
+        console.error(err)
+    }
+    return updated;
+}
+const removeOrganizationFromUser = async (uid, orgId) => {
+    console.log(uid)
+    try {
+        await userCol.updateOne({uid}, {$pull: {organizations: orgId}})
+    } catch (err) {
+        console.error(err)
+        return false
+    }
+    return true;
+}
+
 
 const addUserToOrganization = async (orgId, role, userUid) => {
     console.log("Adding User to Organization")

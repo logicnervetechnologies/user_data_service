@@ -20,7 +20,8 @@ const createUserTmp = async (req, res) => {
         uid: req.user.uid, //(assigned from google auth)
         fName: req.body.fName,
         lName: req.body.lName,
-        organizations:[]
+        organizations:[],
+        invitations:[]
     }
     if (await exists(uDat.uid)) {
         console.log("unauthorized")

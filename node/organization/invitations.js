@@ -48,7 +48,7 @@ const createInvite = async (creatorUid, inviteeUid, orgId) => {
 const validInvite = async (inviteeUid, inviteId, orgId) => {
     // check if invite exists
     const org = await getOrganizationData(orgId, orgCol)
-    if (!org.invitations.some(invite, invite.inviteId === inviteId)) {
+    if (!org.invitations.some((invite) => invite.inviteId === inviteId)) {
         return false
     }
 
