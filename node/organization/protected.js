@@ -28,8 +28,7 @@ const createOrganization = async (req, res) => {
         members: [{
             uid: creatorUser.uid,
             roles:[]
-        }],
-        noRole:[]
+        }]
     }
     let created = null;
     try {
