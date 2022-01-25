@@ -224,14 +224,14 @@ const getOrganizationInformation = async (req, res) => {
         const orgId = req.body.orgId;
         console.log(`Requesting org: ${orgId}`)
         console.log(orgId)
-        const members = await getMembersOfOrganization(orgId)
-        if (members.includes(uid)) {
+        if (await isMemberOfOrganization(orgId, uid)) {
             const organization = await getOrganizationData(orgId)
             res.json(organization)
         } else {
             res.sendStatus(401)
         }
     } catch (err) {
+        console.log(err)
         res.sendStatus(403)
     }
 }
