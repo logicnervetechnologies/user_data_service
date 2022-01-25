@@ -16,14 +16,14 @@ const createUser = async ( newUser ) => {
 
 //const dbName = process.env.USERDB
 const createUserTmp = async (req, res) => {
-    console.log("Entered TMP CREATE USER, this will be deprecated in next version")
+    console.log("TMP check creating user from route")
     const uDat = {
         uid: req.user.uid, //(assigned from google auth)
         fName: req.body.fName,
         lName: req.body.lName,
         organizations:[]
     }
-    if (!await exists(uDat.uid)) {
+    if (await exists(uDat.uid)) {
         console.log("unauthorized")
         res.sendStatus(401)
     } else {
