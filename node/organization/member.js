@@ -15,6 +15,7 @@ const getMembersOfOrganization = async (orgId) => {
 }
 const isMemberOfOrganization = async (orgId, uid) => {
     const members = await getMembersOfOrganization(orgId);
+    if (members == null) return false
     return members.some((member) => {return member.uid === uid})
 }
 const getMember = async (orgId, uid) => {
