@@ -1,5 +1,5 @@
 const { v4 : uuidv4 } = require('uuid')
-const { orgCol } = require('../resources')
+const { orgCol, userCol } = require('../resources')
 const { addOrganizationToUser } = require('../user.js')
 const {getMembersOfOrganization, isMemberOfOrganization, addRoleToMember,
      removeRoleFromMember} = require('./member')
@@ -224,7 +224,25 @@ const getOrganizationInformation = async (req, res) => {
         console.log(`Requesting org: ${orgId}`)
         console.log(orgId)
         if (await isMemberOfOrganization(orgId, uid)) {
+            // get org data
             const organization = await getOrganizationData(orgId)
+            // add member uid mapping
+            let memUids = []
+            organization.members.forEach(mem => {
+                memUids.push(mem.uid)
+                console.log(mem.uid)
+            });
+            users = await userCol.find({'uid': {"$in": memUids}})
+            //console.log(users)
+            let mapping = {}
+            await users.forEach(usr => {
+                console.log(usr)
+                mapping[usr.uid] = {
+                    'fName':usr.fName,
+                    'lName':usr.lName
+                }
+            })
+            organization['uidMap'] = mapping
             res.json(organization)
         } else {
             res.sendStatus(401)
