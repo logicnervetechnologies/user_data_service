@@ -49,7 +49,8 @@ function pretendToken(req, res, next) {
 // authentication functions
 function authenticateToken(req, res, next) {
     const authHeaderCookie = req.headers['cookie']
-    const token = authHeaderCookie && convertCookieString(authHeaderCookie)['accessToken']  
+    const token = authHeaderCookie && convertCookieString(authHeaderCookie)['accessToken'] 
+    req.user = null; 
     if (token == null) { 
         console.log("No auth token")
         return res.sendStatus(401) // check header
