@@ -19,6 +19,18 @@ const createOrganization = async (req, res) => {
         orgName: req.body.orgName,
         orgId: uuidv4(),
         address: req.body.orgAddress,
+        address: {
+            city: req.body.address.city,
+            street1: req.body.address.street1,
+            street2: req.body.address.street2,
+            state_prov: req.body.address.state_prov,
+            country: req.body.address.country,
+            postalCode: req.body.address.postalCode
+        },
+        contact: {
+            email: req.body.contact.email,
+            number: req.body.contact.number,
+        },
         alwaysAskAddingProvider: true,
         alwaysAskAddingPatient: true,
         admins: [creatorUser.uid],
@@ -28,7 +40,8 @@ const createOrganization = async (req, res) => {
         members: [{
             uid: creatorUser.uid,
             roles:[]
-        }]
+        }],
+        active: true
     }
     let created = null;
     try {

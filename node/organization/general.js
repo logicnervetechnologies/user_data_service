@@ -7,9 +7,9 @@ const getGeneralInfoOrganization = async (req, res) => {
     var orgsBasic = [];
     await Promise.all(orgIds.map(async orgId => {
         console.log(orgId)
-        const { orgName }= await getOrganizationData(orgId)
+        const { orgName, address }= await getOrganizationData(orgId)
         //console.log(org.orgName)
-        orgsBasic.push({orgId, orgName})
+        orgsBasic.push({orgId, orgName, address})
     }));
     res.json({orgs:orgsBasic});
     
