@@ -4,12 +4,12 @@ const { getOrganizationData } = require('./protected.js')
 const getGeneralInfoOrganization = async (req, res) => {
     const orgIds = req.body.orgIds;
     console.log(orgIds);
-    var orgsBasic = {};
+    var orgsBasic = [];
     await Promise.all(orgIds.map(async orgId => {
         console.log(orgId)
         const org = await getOrganizationData(orgId)
         console.log(org.orgName)
-        orgsBasic[org.orgId] = org.orgName
+        orgsBasic.append({orgId, orgName})
     }));
     res.json({orgs:orgsBasic});
     
