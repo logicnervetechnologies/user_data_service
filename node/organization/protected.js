@@ -14,6 +14,8 @@ require("dotenv").config()
 
 // create an organization, technically admin action 
 const createOrganization = async (req, res) => {
+    let created = null;
+    try {
     const creatorUser = req.user
     const new_organization = {
         orgName: req.body.orgName,
@@ -31,6 +33,7 @@ const createOrganization = async (req, res) => {
             email: req.body.contact.email,
             number: req.body.contact.number,
         },
+        dtypes:[],
         alwaysAskAddingProvider: true,
         alwaysAskAddingPatient: true,
         admins: [creatorUser.uid],
@@ -43,10 +46,9 @@ const createOrganization = async (req, res) => {
         }],
         active: true
     }
-    let created = null;
-    try {
         await orgCol.insertOne(new_organization)
         await addOrganizationToUser(creatorUser.uid, new_organization.orgId);
+        created = new_organization.orgId
     } catch (err) {
         console.log(err)
         res.sendStatus(500)
